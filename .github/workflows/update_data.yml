@@ -35,3 +35,4 @@ jobs:
           # Commit bare hvis det finnes endringer
           git diff-index --quiet HEAD || git commit -m "Auto-update company data"
           git pus
+# Trigger workflow Sun Oct 26 22:27:26 CET 2025
