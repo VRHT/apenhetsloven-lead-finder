@@ -9,21 +9,25 @@ def main():
 
     # 1. Hent data
     companies = fetch_company_data()
-    print(f"Hentet {len(companies)} selskaper.")
+    print(f"Hentet {len(companies)} selskaper totalt.")
 
     # 2. Filtrer selskaper
     filtered = filter_companies(companies)
     print(f"Etter filtrering: {len(filtered)} selskaper igjen.")
 
-    # 3. Legg til/oppdater 'last_updated' kolonne
+    # 3. Konverter til DataFrame (dersom det ikke allerede er det)
+    if not isinstance(filtered, pd.DataFrame):
+        filtered = pd.DataFrame(filtered)
+
+    # 4. Legg til / oppdater 'last_updated' kolonne
     filtered["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # 4. Lagre til CSV
+    # 5. Lagre til CSV
     csv_path = "data/companies.csv"
     filtered.to_csv(csv_path, index=False)
     print(f"✅ Lagret oppdatert CSV med timestamp: {csv_path}")
 
-    # 5. Last opp til Google Sheets
+    # 6. Last opp til Google Sheets
     upload_to_sheets(filtered)
     print("📤 Data lastet opp til Google Sheets.")
 
