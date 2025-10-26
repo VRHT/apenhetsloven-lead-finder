@@ -2,8 +2,8 @@ name: Update company data weekly
 
 on:
   schedule:
-    - cron: "0 8 * * 1" # Kjør hver mandag kl 08:00 (CET)
-  workflow_dispatch: # Tillat manuell kjøring fra GitHub
+    - cron: "0 8 * * 1" # Kjør hver mandag kl 08:00 norsk tid
+  workflow_dispatch: # Mulig å kjøre manuelt fra GitHub
 
 jobs:
   update:
@@ -31,10 +31,20 @@ jobs:
         run: |
           python main.py
 
+      - name: Update README timestamp
+        run: |
+          echo "🕒 Sist oppdatert: $(TZ='Europe/Oslo' date '+%Y-%m-%d %H:%M:%S %Z')" > LAST_UPDATED.txt
+          if grep -q "🕒 Sist oppdatert:" README.md; then
+            sed -i 's/🕒 Sist oppdatert:.*/🕒 Sist oppdatert: '"$(TZ='Europe/Oslo' date '+%Y-%m-%d %H:%M:%S %Z')"'/' README.md
+          else
+            echo "" >> README.md
+            echo "🕒 Sist oppdatert: $(TZ='Europe/Oslo' date '+%Y-%m-%d %H:%M:%S %Z')" >> README.md
+          fi
+
       - name: Commit and push updated data
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add data/companies.csv || true
-          git diff-index --quiet HEAD || git commit -m "Auto-update companies.csv [skip ci]"
+          git add data/companies.csv README.md || true
+          git diff-index --quiet HEAD || git commit -m "Auto-update CSV and README timestamp [skip ci]"
           git push
