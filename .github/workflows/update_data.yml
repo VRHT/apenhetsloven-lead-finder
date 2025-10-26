@@ -48,3 +48,4 @@ jobs:
           git add data/companies.csv README.md || true
           git diff-index --quiet HEAD || git commit -m "Auto-update CSV and README timestamp [skip ci]"
           git push
+# Trigger workflow Sun Oct 26 22:40:40 CET 2025
