@@ -1,12 +1,9 @@
 name: Update company data weekly
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch: # Mulig å kjøre manuelt fra GitHub
   schedule:
-    - cron: "0 8 * * 1" # Kjører hver mandag kl. 08:00
+    - cron: "0 8 * * 1" # Kjør hver mandag kl 08:00 (CET)
+  workflow_dispatch: # Tillat manuell kjøring fra GitHub
 
 jobs:
   update:
@@ -26,25 +23,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Print current time (CET)
+        run: |
+          echo "🕒 Workflow kjørt: $(TZ='Europe/Oslo' date '+%Y-%m-%d %H:%M:%S %Z')"
+
       - name: Run update script
         run: |
           python main.py
-
-      - name: Log last line of companies.csv
-        run: |
-          echo "---- Siste linje i data/companies.csv ----"
-          tail -n 1 data/companies.csv || echo "companies.csv ikke funnet"
-          echo "------------------------------------------"
 
       - name: Commit and push updated data
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-
-          git add -A
-          if ! git diff --cached --quiet; then
-            git commit -m "Auto-update data"
-            git push
-          else
-            echo "Ingen endringer å pushe"
-          fi
+          git add data/companies.csv || true
+          git diff-index --quiet HEAD || git commit -m "Auto-update companies.csv [skip ci]"
+          git push
