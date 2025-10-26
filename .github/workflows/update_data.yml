@@ -1,9 +1,12 @@
 name: Update company data weekly
 
 on:
-  schedule:
-    - cron: "0 8 * * 1" # Kjør hver mandag kl 08:00
+  push:
+    branches:
+      - main
   workflow_dispatch: # Mulig å kjøre manuelt fra GitHub
+  schedule:
+    - cron: "0 8 * * 1" # Kjører hver mandag kl. 08:00
 
 jobs:
   update:
@@ -31,8 +34,12 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+
+          # Legg til kun hvis det finnes faktiske endringer
           git add -A
-          # Commit bare hvis det finnes endringer
-          git diff-index --quiet HEAD || git commit -m "Auto-update company data"
-          git pus
-# Trigger workflow Sun Oct 26 22:27:26 CET 2025
+          if ! git diff --cached --quiet; then
+            git commit -m "Auto-update data"
+            git push
+          else
+            echo "Ingen endringer å pushe"
+          fi
