@@ -5,6 +5,9 @@ on:
     - cron: "0 8 * * 1" # Kjør hver mandag kl 08:00 norsk tid
   workflow_dispatch: # Mulig å kjøre manuelt fra GitHub
 
+permissions:
+  contents: write # 👈 Nødvendig for at GitHub Actions skal kunne pushe endringer
+
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -25,22 +28,22 @@ jobs:
 
       - name: Run update script
         run: |
-          echo "🚀 Kjører oppdatering av selskapsdata..."
           python main.py
 
-      - name: Log update summary
+      - name: Generate README update (timestamp + count)
+        shell: bash
         run: |
-          echo ""
-          echo "======================================"
-          echo "🕒 Sist oppdatert: $(TZ='Europe/Oslo' date '+%Y-%m-%d %H:%M:%S %Z')"
-          echo "📊 Antall selskaper i data/companies.csv: $(($(wc -l < data/companies.csv)-1))"
-          echo "======================================"
-          echo ""
+          echo "🕒 Sist oppdatert: $(TZ='Europe/Oslo' date '+%Y-%m-%d %H:%M:%S')" > TMP_README.md
+          echo "" >> TMP_README.md
+          echo "📊 Antall selskaper i eksport: $(wc -l < data/companies.csv)" >> TMP_README.md
+          echo "" >> TMP_README.md
+          cat README.md >> TMP_README.md
+          mv TMP_README.md README.md
 
       - name: Commit and push updated data
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add data/companies.csv README.md || true
-          git diff-index --quiet HEAD || git commit -m "Auto-update CSV [skip ci]"
+          git add data/companies.csv README.md
+          git diff-index --quiet HEAD || git commit -m "Auto-update company data and README"
           git push
