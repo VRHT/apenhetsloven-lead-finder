@@ -25,22 +25,22 @@ jobs:
 
       - name: Run update script
         run: |
+          echo "🚀 Kjører oppdatering av selskapsdata..."
           python main.py
 
-      - name: Generate README update (timestamp + count)
-        shell: bash
+      - name: Log update summary
         run: |
-          echo "🕒 Sist oppdatert: $(TZ='Europe/Oslo' date '+%Y-%m-%d %H:%M:%S %Z')" > TEMP_README.md
-          echo "" >> TEMP_README.md
-          echo "📊 Antall selskaper: $(($(wc -l < data/companies.csv)-1))" >> TEMP_README.md
-          echo "" >> TEMP_README.md
-          tail -n +1 README.md >> TEMP_README.md
-          mv TEMP_README.md README.md
+          echo ""
+          echo "======================================"
+          echo "🕒 Sist oppdatert: $(TZ='Europe/Oslo' date '+%Y-%m-%d %H:%M:%S %Z')"
+          echo "📊 Antall selskaper i data/companies.csv: $(($(wc -l < data/companies.csv)-1))"
+          echo "======================================"
+          echo ""
 
       - name: Commit and push updated data
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add data/companies.csv README.md
-          git diff-index --quiet HEAD || git commit -m "Auto-update CSV and README [skip ci]"
+          git add data/companies.csv README.md || true
+          git diff-index --quiet HEAD || git commit -m "Auto-update CSV [skip ci]"
           git push
