@@ -6,7 +6,7 @@ on:
   workflow_dispatch: # Mulig å kjøre manuelt fra GitHub
 
 permissions:
-  contents: write # 👈 Nødvendig for at GitHub Actions skal kunne pushe endringer
+  contents: write # 👈 nødvendig for å pushe endringer
 
 jobs:
   update:
@@ -25,12 +25,44 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install gspread google-auth google-auth-oauthlib google-auth-httplib2
 
-      - name: Run update script
+      - name: Run update script (fetch, filter, save CSV)
         run: |
           python main.py
 
-      - name: Generate README update (timestamp + count)
+      - name: Sync companies.csv to Google Sheets
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: config/credentials.json
+        run: |
+          python - <<'PYTHON'
+          import gspread
+          import pandas as pd
+          from google.oauth2.service_account import Credentials
+
+          # Sett opp autentisering
+          creds = Credentials.from_service_account_file(
+              "config/credentials.json",
+              scopes=["https://www.googleapis.com/auth/spreadsheets"]
+          )
+          client = gspread.authorize(creds)
+
+          # Åpne Google Sheet
+          SHEET_NAME = "Regneark uten navn"  # <- endre til ditt faktiske navn om du vil
+          sh = client.open(SHEET_NAME)
+          worksheet = sh.sheet1
+
+          # Les inn CSV-data
+          df = pd.read_csv("data/companies.csv")
+
+          # Tøm arket og last opp nye data
+          worksheet.clear()
+          worksheet.update([df.columns.values.tolist()] + df.values.tolist())
+
+          print(f"✅ Oppdatert {len(df)} selskaper i Google Sheet: {SHEET_NAME}")
+          PYTHON
+
+      - name: Update README with timestamp and company count
         shell: bash
         run: |
           echo "🕒 Sist oppdatert: $(TZ='Europe/Oslo' date '+%Y-%m-%d %H:%M:%S')" > TMP_README.md
@@ -45,5 +77,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add data/companies.csv README.md
-          git diff-index --quiet HEAD || git commit -m "Auto-update company data and README"
+          git diff-index --quiet HEAD || git commit -m "Auto-update company data, Sheets sync and README"
           git push
