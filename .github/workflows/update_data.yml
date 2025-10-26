@@ -23,29 +23,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Print current time (CET)
-        run: |
-          echo "🕒 Workflow kjørt: $(TZ='Europe/Oslo' date '+%Y-%m-%d %H:%M:%S %Z')"
-
       - name: Run update script
         run: |
           python main.py
 
-      - name: Update README timestamp
+      - name: Generate README update
         run: |
-          echo "🕒 Sist oppdatert: $(TZ='Europe/Oslo' date '+%Y-%m-%d %H:%M:%S %Z')" > LAST_UPDATED.txt
-          if grep -q "🕒 Sist oppdatert:" README.md; then
-            sed -i 's/🕒 Sist oppdatert:.*/🕒 Sist oppdatert: '"$(TZ='Europe/Oslo' date '+%Y-%m-%d %H:%M:%S %Z')"'/' README.md
-          else
-            echo "" >> README.md
-            echo "🕒 Sist oppdatert: $(TZ='Europe/Oslo' date '+%Y-%m-%d %H:%M:%S %Z')" >> README.md
-          fi
+          echo "🕒 Sist oppdatert: $(TZ='Europe/Oslo' date '+%Y-%m-%d %H:%M:%S %Z')" > TEMP_README.md
+          echo "" >> TEMP_README.md
+          echo "📊 Antall selskaper: $(($(wc -l < data/companies.csv)-1))" >> TEMP_README.md
+          echo "" >> TEMP_README.md
+          cat README.md >> TEMP_README.md
+          mv TEMP_README.md README.md
 
       - name: Commit and push updated data
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add data/companies.csv README.md || true
-          git diff-index --quiet HEAD || git commit -m "Auto-update CSV and README timestamp [skip ci]"
+          git add data/companies.csv README.md
+          git diff-index --quiet HEAD || git commit -m "Auto-update CSV and README [skip ci]"
           git push
-# Trigger workflow Sun Oct 26 22:40:40 CET 2025
